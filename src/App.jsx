@@ -14,12 +14,12 @@ import { useCollectionData, useDocument } from "react-firebase-hooks/firestore";
 
 // Firebase config
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID
+  apiKey: "AIzaSyBQSuvCd5mb-lbvoaZrwGl7fXhFRZWI0ZU",
+  authDomain: "neshaybahs-chatroom.firebaseapp.com",
+  projectId: "neshaybahs-chatroom",
+  storageBucket: "neshaybahs-chatroom.firebasestorage.app",
+  messagingSenderId: "120115708605",
+  appId: "1:120115708605:web:b2956f68690d946f5badd4"
 };
 
 // Initialize Firebase
