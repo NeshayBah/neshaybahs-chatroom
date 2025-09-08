@@ -74,8 +74,8 @@ const useMusicPlayer = () => {
         filename,
         artist: artist || 'Unknown Artist',
         songName: songName || 'Unknown Song',
-        url: `${process.env.PUBLIC_URL}/music/${filename}`, // Files should be in public/music/ folder
-        albumCover: `${process.env.PUBLIC_URL}/album-covers/${albumCoverFileName}` // Album covers in public/album-covers/ folder
+        url: `${process.env.PUBLIC_URL}/music/${encodeURIComponent(filename)}`,
+        albumCover: `${process.env.PUBLIC_URL}/album-covers/${encodeURIComponent(albumCoverFileName)}`,
       };
     });
 
