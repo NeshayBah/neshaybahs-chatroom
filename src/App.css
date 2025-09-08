@@ -775,6 +775,172 @@ header h1 {
   background: #7b2cbf;
 }
 
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .progress-section {
+    padding: 0 6px;
+  }
+  
+  .time-display {
+    font-size: 0.8rem;
+  }
+  
+  .progress-bar-container {
+    height: 24px;
+    padding: 8px 0;
+  }
+  
+  .progress-bar {
+    height: 8px;
+  }
+  
+  .progress-bar-container:hover .progress-bar {
+    height: 10px;
+  }
+  
+  .progress-handle {
+    width: 18px;
+    height: 18px;
+    opacity: 0.7; /* Make it slightly visible on mobile */
+  }
+  
+  .progress-bar-container:hover .progress-handle {
+    opacity: 1;
+  }
+}
+
+/* Animation for smooth progress updates */
+@keyframes progressUpdate {
+  from { transform: scaleX(0.98); }
+  to { transform: scaleX(1); }
+}
+
+.progress-fill {
+  animation: progressUpdate 0.1s ease-out;
+  transform-origin: left;
+}
+
+/* Improved media controls spacing with progress bar */
+.media-controls {
+  gap: 12px; /* Reduced gap to accommodate progress bar */
+}
+
+/* Adjust button group spacing */
+.button-group {
+  margin-top: 8px;
+}
+
+/* Animation for when song changes */
+@keyframes songChange {
+  0% { opacity: 1; transform: translateY(0); }
+  50% { opacity: 0.7; transform: translateY(-3px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.media-text.changing {
+  animation: songChange 0.5s ease-in-out;
+}
+
+/* Ensure media controls don't interfere with other elements */
+.chat-panel {
+  margin-right: 0;
+}
+
+/* On larger screens, add margin to prevent overlap */
+@media (min-width: 992px) {
+  .chat-panel {
+    margin-right: 50px; /* Space for media controls */
+  }
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(199, 125, 255, 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(199, 125, 255, 0.5);
+}
+
+@media (max-width: 768px) {
+  /* Prevent body scrolling on mobile */
+  html, body {
+    overflow: hidden;
+    height: 100vh;
+    position: fixed;
+    width: 100%;
+  }
+  
+  .App {
+    height: 100vh;
+    overflow: hidden;
+  }
+  
+  .chat-container {
+    padding: 0;
+    overflow: hidden;
+    height: 100%;
+  }
+  
+  .chat-container.has-user {
+    padding: 0;
+  }
+  
+  .chat-panel {
+    max-width: 100%;
+    border-radius: 0;
+    margin: 0;
+    height: 100%;
+    max-height: 100%;
+  }
+  
+  .message {
+    max-width: 95%;
+  }
+  
+  .settings-panel {
+    width: 100%;
+  }
+  
+  .signin-container {
+    margin: 10px;
+    padding: 40px 30px;
+    width: calc(100% - 20px);
+    min-width: 280px;
+    transform: translateY(-10px);
+  }
+  
+  .signin-container .btn {
+    padding: 16px 35px;
+    font-size: 1.1rem;
+  }
+  
+  /* Ensure messages list is the only scrollable area */
+  .messages-list {
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+    height: 100%;
+    max-height: 100%;
+  }
+  
+  /* Prevent any other elements from scrolling */
+  .messages-container {
+    height: 100%;
+    overflow: hidden;
+  }
+}
+
 /* Add these CSS fixes to your App.css */
 
 /* Mobile viewport fixes */
@@ -918,137 +1084,5 @@ header h1 {
     .App {
       height: calc(var(--vh, 1vh) * 100);
     }
-  }
-}
-
-/* Animation for smooth progress updates */
-@keyframes progressUpdate {
-  from { transform: scaleX(0.98); }
-  to { transform: scaleX(1); }
-}
-
-.progress-fill {
-  animation: progressUpdate 0.1s ease-out;
-  transform-origin: left;
-}
-
-/* Improved media controls spacing with progress bar */
-.media-controls {
-  gap: 12px; /* Reduced gap to accommodate progress bar */
-}
-
-/* Adjust button group spacing */
-.button-group {
-  margin-top: 8px;
-}
-
-/* Animation for when song changes */
-@keyframes songChange {
-  0% { opacity: 1; transform: translateY(0); }
-  50% { opacity: 0.7; transform: translateY(-3px); }
-  100% { opacity: 1; transform: translateY(0); }
-}
-
-.media-text.changing {
-  animation: songChange 0.5s ease-in-out;
-}
-
-/* Ensure media controls don't interfere with other elements */
-.chat-panel {
-  margin-right: 0;
-}
-
-/* On larger screens, add margin to prevent overlap */
-@media (min-width: 992px) {
-  .chat-panel {
-    margin-right: 50px; /* Space for media controls */
-  }
-}
-
-/* Scrollbar styling */
-::-webkit-scrollbar {
-  width: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb {
-  background: rgba(199, 125, 255, 0.3);
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(199, 125, 255, 0.5);
-}
-
-@media (max-width: 768px) {
-  /* Prevent body scrolling on mobile */
-  html, body {
-    overflow: hidden;
-    height: 100vh;
-    position: fixed;
-    width: 100%;
-  }
-  
-  .App {
-    height: 100vh;
-    overflow: hidden;
-  }
-  
-  .chat-container {
-    padding: 0;
-    overflow: hidden;
-    height: 100%;
-  }
-  
-  .chat-container.has-user {
-    padding: 0;
-  }
-  
-  .chat-panel {
-    max-width: 100%;
-    border-radius: 0;
-    margin: 0;
-    height: 100%;
-    max-height: 100%;
-  }
-  
-  .message {
-    max-width: 95%;
-  }
-  
-  .settings-panel {
-    width: 100%;
-  }
-  
-  .signin-container {
-    margin: 10px;
-    padding: 40px 30px;
-    width: calc(100% - 20px);
-    min-width: 280px;
-    transform: translateY(-10px);
-  }
-  
-  .signin-container .btn {
-    padding: 16px 35px;
-    font-size: 1.1rem;
-  }
-  
-  /* Ensure messages list is the only scrollable area */
-  .messages-list {
-    overflow-y: auto;
-    overflow-x: hidden;
-    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
-    height: 100%;
-    max-height: 100%;
-  }
-  
-  /* Prevent any other elements from scrolling */
-  .messages-container {
-    height: 100%;
-    overflow: hidden;
   }
 }
