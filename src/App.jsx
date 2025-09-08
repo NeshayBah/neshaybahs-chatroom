@@ -41,11 +41,11 @@ const useMusicPlayer = () => {
   const getSongCoverFileName = (filename) => {
     // Extract song name from filename: "Jeff Buckley - Lover You Shouldve Come Over.mp3"
     const nameWithoutExtension = filename.replace('.mp3', '');
-    
+
     // Split by ' - ' and take the song name part (after the artist)
     const parts = nameWithoutExtension.split(' - ');
     const songName = parts.length > 1 ? parts[1] : parts[0];
-    
+
     // Convert to lowercase, replace spaces and special characters
     const cleanName = songName
       .toLowerCase()
@@ -53,7 +53,7 @@ const useMusicPlayer = () => {
       .replace(/[^a-z0-9\s]/g, '') // Remove special characters except spaces
       .replace(/\s+/g, '-') // Replace spaces with hyphens
       .trim();
-    
+
     return `${cleanName}.png`;
   };
 
@@ -69,13 +69,13 @@ const useMusicPlayer = () => {
     const processedPlaylist = musicFiles.map(filename => {
       const [artist, songName] = filename.replace('.mp3', '').split(' - ');
       const albumCoverFileName = getSongCoverFileName(filename);
-      
+
       return {
         filename,
         artist: artist || 'Unknown Artist',
         songName: songName || 'Unknown Song',
-        url: `${process.env.PUBLIC_URL}/music/${encodeURIComponent(filename)}`,
-        albumCover: `${process.env.PUBLIC_URL}/album-covers/${encodeURIComponent(albumCoverFileName)}`,
+        url: `${import.meta.env.BASE_URL}music/${encodeURIComponent(filename)}`,
+        albumCover: `${import.meta.env.BASE_URL}album-covers/${encodeURIComponent(albumCoverFileName)}`
       };
     });
 
@@ -135,9 +135,9 @@ const useMusicPlayer = () => {
   };
 
   const getCurrentTrack = () => {
-    return playlist[currentTrackIndex] || { 
-      artist: 'No Artist', 
-      songName: 'No Song', 
+    return playlist[currentTrackIndex] || {
+      artist: 'No Artist',
+      songName: 'No Song',
       url: '',
       albumCover: 'https://i.scdn.co/image/ab67616d0000b27398b1c6c0d05f8841f08a9eca' // Default fallback
     };
@@ -410,7 +410,7 @@ function ProfileSettings({ user, onClose }) {
             >
               Reset to Google
             </button>
-            )}
+          )}
         </div>
       </div>
     </div>
@@ -455,7 +455,7 @@ function MusicPlayer() {
 
   // Default fallback album cover
   const defaultAlbumCover = "https://i.scdn.co/image/ab67616d0000b27398b1c6c0d05f8841f08a9eca";
-  
+
   // Handle image loading errors
   const handleImageError = (e) => {
     e.target.src = defaultAlbumCover;
@@ -464,9 +464,9 @@ function MusicPlayer() {
   return (
     <div className="media-controls">
       <audio ref={audioRef} />
-      <img 
-        src={currentTrack.albumCover} 
-        alt="Album Cover" 
+      <img
+        src={currentTrack.albumCover}
+        alt="Album Cover"
         className="album-cover"
         onError={handleImageError}
       />
