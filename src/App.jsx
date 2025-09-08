@@ -225,6 +225,24 @@ function App() {
   const [user] = useAuthState(auth);
   const [showSettings, setShowSettings] = useState(false);
 
+  // ADD THIS NEW USEEFFECT HERE:
+  useEffect(() => {
+    // Update CSS custom property for viewport height on mobile
+    const updateVH = () => {
+      const vh = window.innerHeight * 0.01;
+      document.documentElement.style.setProperty('--vh', `${vh}px`);
+    };
+    
+    updateVH();
+    window.addEventListener('resize', updateVH);
+    window.addEventListener('orientationchange', updateVH);
+    
+    return () => {
+      window.removeEventListener('resize', updateVH);
+      window.removeEventListener('orientationchange', updateVH);
+    };
+  }, []);
+
   return (
     <div className="App">
       <header>
