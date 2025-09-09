@@ -357,9 +357,9 @@ function App() {
     <div className="App">
       <header>
         <div className="d-flex align-items-center">
-          <img 
+          <img
             src={`${import.meta.env.BASE_URL}images/logo.png`}
-            alt="Logo" 
+            alt="Logo"
             style={{ height: '40px', width: 'auto', marginRight: '15px' }}
             onError={(e) => {
               e.target.style.display = 'none';
@@ -841,7 +841,7 @@ function ChatRoom() {
     <>
       {/* Mobile Mini Player - show only on mobile */}
       <MobileMiniPlayer />
-      
+
       {/* Desktop Music Player */}
       <MusicPlayer />
 
@@ -913,8 +913,36 @@ function ChatMessage({ message }) {
 
   const formatTime = (timestamp) => {
     if (!timestamp) return "";
+
     const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const yesterday = new Date(today);
+    yesterday.setDate(today.getDate() - 1);
+
+    const target = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+
+    let datePart;
+    if (target.getTime() === today.getTime()) {
+      datePart = "Today";
+    } else if (target.getTime() === yesterday.getTime()) {
+      datePart = "Yesterday";
+    } else {
+      datePart = date.toLocaleDateString("en-US", {
+        month: "numeric",
+        day: "numeric",
+        year: "numeric",
+      });
+    }
+
+    const timePart = date.toLocaleString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    });
+
+    return `${datePart} ${timePart}`;
   };
 
   const handleImageLoad = () => {
