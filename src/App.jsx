@@ -59,8 +59,9 @@ const useMusicPlayer = () => {
   // Initialize playlist from music folder
   useEffect(() => {
     const musicFiles = [
+      'Frank Ocean - American Wedding.mp3',
       'Jeff Buckley - Lover You Shouldve Come Over.mp3',
-      'wifiskeletton - Nope your too late i already died.mp3',
+      'wifiskeletton - Nope your too late i already died.mp3'
     ];
 
     const processedPlaylist = musicFiles.map(filename => {

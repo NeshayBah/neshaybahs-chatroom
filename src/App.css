@@ -45,6 +45,7 @@ header {
   border-bottom: 1px solid rgba(199, 125, 255, 0.3);
   box-shadow: 0 4px 20px rgba(123, 44, 191, 0.2);
   flex-shrink: 0;
+  z-index: 1000 !important;
 }
 
 header h1 {
@@ -312,6 +313,7 @@ header h1 {
   border-top: 1px solid rgba(199, 125, 255, 0.2);
   flex-shrink: 0;
   gap: 12px;
+  align-items: flex-end; /* Align items to bottom for multi-line layout */
 }
 
 .chat-form input {
@@ -522,7 +524,7 @@ header h1 {
   padding: 25px;
   transform: translateX(100%);
   transition: transform 0.4s ease;
-  z-index: 999;
+  z-index: 1002 !important;
   overflow-y: auto;
   border-left: 1px solid rgba(199, 125, 255, 0.3);
   box-shadow: -4px 0 20px rgba(123, 44, 191, 0.3);
@@ -540,12 +542,26 @@ header h1 {
   height: 100vh;
   background-color: rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(2px);
-  z-index: 998;
+  z-index: 1001 !important;
 }
 
 .settings-panel h4 {
   color: #e0aaff;
+  margin: 0 !important;
+  line-height: 32px !important;
+  font-size: 1.4rem;
+  font-weight: 600;
   margin-bottom: 25px;
+}
+
+.settings-panel .btn-close,
+.settings-panel .btn-close-white {
+  width: 32px !important;
+  height: 32px !important;
+  margin: 0 !important;
+  flex-shrink: 0 !important;
+  position: relative !important;
+  z-index: 1003 !important;
 }
 
 /* Profile section within settings */
@@ -664,18 +680,6 @@ header h1 {
 /* ==============================================
    IMAGE SHARING STYLES
    ============================================== */
-
-/* Image upload button in chat form */
-.chat-form {
-  display: flex;
-  padding: 20px;
-  background: rgba(16, 6, 38, 0.8);
-  backdrop-filter: blur(20px);
-  border-top: 1px solid rgba(199, 125, 255, 0.2);
-  flex-shrink: 0;
-  gap: 12px;
-  align-items: flex-end; /* Align items to bottom for multi-line layout */
-}
 
 .image-upload-btn {
   background: rgba(255, 255, 255, 0.1);
@@ -835,65 +839,6 @@ header h1 {
 
 .message-image-container + p {
   margin-top: 8px;
-}
-
-/* ==============================================
-   RESPONSIVE DESIGN FOR IMAGES
-   ============================================== */
-
-@media (max-width: 768px) {
-  .image-preview {
-    max-width: 150px;
-    max-height: 120px;
-  }
-  
-  .message-image-container {
-    max-width: 250px;
-  }
-  
-  .chat-form {
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-  
-  .image-preview-container {
-    padding: 10px 15px 0;
-  }
-  
-  /* Stack form elements on mobile if needed */
-  .chat-form input {
-    flex: 1;
-    min-width: 0;
-  }
-  
-  .image-upload-btn {
-    min-width: 45px;
-    height: 45px;
-    padding: 10px;
-    font-size: 1.1rem;
-  }
-  
-  .chat-form button[type="submit"] {
-    min-width: 45px;
-    height: 45px;
-    padding: 10px;
-  }
-}
-
-/* Very small mobile screens */
-@media (max-width: 480px) {
-  .image-preview {
-    max-width: 120px;
-    max-height: 100px;
-  }
-  
-  .message-image-container {
-    max-width: 200px;
-  }
-  
-  .message {
-    max-width: 90%;
-  }
 }
 
 /* ==============================================
@@ -1155,6 +1100,56 @@ header h1 {
     padding: 16px 35px;
     font-size: 1.1rem;
   }
+  
+  /* Mobile specific settings panel fixes */
+  .settings-panel .d-flex.justify-content-between.align-items-center {
+    margin-top: 25px !important;
+    padding: 0 !important;
+    background: none !important;
+    backdrop-filter: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    position: relative !important;
+    z-index: 1003 !important;
+  }
+  
+  .image-preview {
+    max-width: 150px;
+    max-height: 120px;
+  }
+  
+  .message-image-container {
+    max-width: 250px;
+  }
+  
+  .chat-form {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  
+  .image-preview-container {
+    padding: 10px 15px 0;
+  }
+  
+  /* Stack form elements on mobile if needed */
+  .chat-form input {
+    flex: 1;
+    min-width: 0;
+  }
+  
+  .image-upload-btn {
+    min-width: 45px;
+    height: 45px;
+    padding: 10px;
+    font-size: 1.1rem;
+  }
+  
+  .chat-form button[type="submit"] {
+    min-width: 45px;
+    height: 45px;
+    padding: 10px;
+  }
 }
 
 /* ==============================================
@@ -1190,5 +1185,21 @@ header h1 {
     .App {
       height: calc(var(--vh, 1vh) * 100);
     }
+  }
+}
+
+/* Very small mobile screens */
+@media (max-width: 480px) {
+  .image-preview {
+    max-width: 120px;
+    max-height: 100px;
+  }
+  
+  .message-image-container {
+    max-width: 200px;
+  }
+  
+  .message {
+    max-width: 90%;
   }
 }
