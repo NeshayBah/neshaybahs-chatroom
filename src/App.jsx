@@ -28,7 +28,10 @@ const auth = getAuth(app);
 const firestore = getFirestore(app);
 const analytics = getAnalytics(app);
 
-// UPDATED Music Player Hook with Album Cover Logic
+const CLOUDINARY_CLOUD_NAME = 'dssbbkavm';
+const CLOUDINARY_UPLOAD_PRESET = 'chat_uploads';
+
+// Music Player Hook
 const useMusicPlayer = () => {
   const audioRef = useRef(null);
   const [playlist, setPlaylist] = useState([]);
@@ -39,19 +42,15 @@ const useMusicPlayer = () => {
 
   // Function to convert song name to album cover filename
   const getSongCoverFileName = (filename) => {
-    // Extract song name from filename: "Jeff Buckley - Lover You Shouldve Come Over.mp3"
     const nameWithoutExtension = filename.replace('.mp3', '');
-
-    // Split by ' - ' and take the song name part (after the artist)
     const parts = nameWithoutExtension.split(' - ');
     const songName = parts.length > 1 ? parts[1] : parts[0];
 
-    // Convert to lowercase, replace spaces and special characters
     const cleanName = songName
       .toLowerCase()
-      .replace(/'/g, '') // Remove apostrophes
-      .replace(/[^a-z0-9\s]/g, '') // Remove special characters except spaces
-      .replace(/\s+/g, '-') // Replace spaces with hyphens
+      .replace(/'/g, '')
+      .replace(/[^a-z0-9\s]/g, '')
+      .replace(/\s+/g, '-')
       .trim();
 
     return `${cleanName}.png`;
@@ -59,8 +58,6 @@ const useMusicPlayer = () => {
 
   // Initialize playlist from music folder
   useEffect(() => {
-    // You'll need to put your MP3 files in the public/music folder
-    // and list them here or load them dynamically
     const musicFiles = [
       'Jeff Buckley - Lover You Shouldve Come Over.mp3',
       'wifiskeletton - Nope your too late i already died.mp3',
@@ -78,8 +75,6 @@ const useMusicPlayer = () => {
         albumCover: `${import.meta.env.BASE_URL}album-covers/${encodeURIComponent(albumCoverFileName)}`
       };
     });
-
-    console.log('Processed playlist:', processedPlaylist); // Debug log to see the generated paths
 
     setPlaylist(processedPlaylist);
   }, []);
@@ -139,7 +134,7 @@ const useMusicPlayer = () => {
       artist: 'No Artist',
       songName: 'No Song',
       url: '',
-      albumCover: 'https://i.scdn.co/image/ab67616d0000b27398b1c6c0d05f8841f08a9eca' // Default fallback
+      albumCover: 'https://i.scdn.co/image/ab67616d0000b27398b1c6c0d05f8841f08a9eca'
     };
   };
 
@@ -180,7 +175,6 @@ const createOrUpdateUserProfile = async (uid, profileData) => {
   }
 };
 
-// Helper to get display data (custom profile → Google → fallback)
 const getUserDisplayData = (customProfile, googleUser) => {
   return {
     displayName: customProfile?.displayName || googleUser?.displayName || "Anonymous",
@@ -221,22 +215,137 @@ const useUserProfile = (user) => {
   };
 };
 
+// Image upload utility function
+const uploadImage = async (file, userId) => {
+  try {
+    if (file.size > 10 * 1024 * 1024) {
+      throw new Error("File size exceeds 10MB limit");
+    }
+
+    if (!file.type.startsWith('image/')) {
+      throw new Error("File must be an image");
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+
+    const cleanUserId = userId.replace(/[^a-zA-Z0-9]/g, '');
+    formData.append('folder', `chat_images/${cleanUserId}`);
+
+    const timestamp = Date.now();
+    const cleanFileName = file.name.split('.')[0].replace(/[^a-zA-Z0-9]/g, '_');
+    formData.append('public_id', `${timestamp}_${cleanFileName}`);
+
+    const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
+      method: 'POST',
+      body: formData
+    });
+
+    const responseText = await response.text();
+
+    if (!response.ok) {
+      console.error(`HTTP error! status: ${response.status}, response: ${responseText}`);
+      try {
+        const errorData = JSON.parse(responseText);
+        throw new Error(errorData.error?.message || `HTTP ${response.status}: ${responseText}`);
+      } catch (parseError) {
+        throw new Error(`HTTP ${response.status}: ${responseText}`);
+      }
+    }
+
+    const data = JSON.parse(responseText);
+
+    if (data.secure_url) {
+      return {
+        success: true,
+        url: data.secure_url,
+        publicId: data.public_id,
+        fileName: data.original_filename
+      };
+    } else {
+      throw new Error(data.error?.message || 'Upload failed - no secure_url returned');
+    }
+
+  } catch (error) {
+    console.error("Error uploading image to Cloudinary:", error);
+
+    if (error.message.includes('Invalid upload preset')) {
+      return {
+        success: false,
+        error: "Upload preset 'chat_uploads' not found or not configured properly in Cloudinary"
+      };
+    } else if (error.message.includes('Invalid cloud name')) {
+      return {
+        success: false,
+        error: "Cloud name 'dssbbkavm' not found in Cloudinary"
+      };
+    } else if (error.message.includes('Unauthorized')) {
+      return {
+        success: false,
+        error: "Upload preset is not configured for unsigned uploads"
+      };
+    }
+
+    return {
+      success: false,
+      error: error.message || "Failed to upload image to Cloudinary"
+    };
+  }
+};
+
+// Image preview component
+function ImagePreview({ file, onRemove }) {
+  const [preview, setPreview] = useState(null);
+
+  useEffect(() => {
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+
+    return () => {
+      if (preview) {
+        URL.revokeObjectURL(preview);
+      }
+    };
+  }, [file]);
+
+  if (!preview) return null;
+
+  return (
+    <div className="image-preview">
+      <img src={preview} alt="Preview" />
+      <button
+        className="remove-preview-btn"
+        onClick={onRemove}
+        type="button"
+      >
+        <i className="bi bi-x"></i>
+      </button>
+    </div>
+  );
+}
+
+// Main App Component
 function App() {
   const [user] = useAuthState(auth);
   const [showSettings, setShowSettings] = useState(false);
 
-  // ADD THIS NEW USEEFFECT HERE:
+  // Update CSS custom property for viewport height on mobile
   useEffect(() => {
-    // Update CSS custom property for viewport height on mobile
     const updateVH = () => {
       const vh = window.innerHeight * 0.01;
       document.documentElement.style.setProperty('--vh', `${vh}px`);
     };
-    
+
     updateVH();
     window.addEventListener('resize', updateVH);
     window.addEventListener('orientationchange', updateVH);
-    
+
     return () => {
       window.removeEventListener('resize', updateVH);
       window.removeEventListener('orientationchange', updateVH);
@@ -284,6 +393,7 @@ function App() {
   );
 }
 
+// Profile Settings Component
 function ProfileSettings({ user, onClose }) {
   const { customProfile, displayData, updateProfile } = useUserProfile(user);
   const [isEditing, setIsEditing] = useState(false);
@@ -320,7 +430,6 @@ function ProfileSettings({ user, onClose }) {
     if (window.confirm("Reset to Google profile data?")) {
       setIsSaving(true);
 
-      // Clear custom profile data
       const success = await updateProfile({
         displayName: null,
         photoURL: null
@@ -435,6 +544,7 @@ function ProfileSettings({ user, onClose }) {
   );
 }
 
+// Sign In Component
 function SignIn() {
   const signInWithGoogle = async () => {
     const provider = new GoogleAuthProvider();
@@ -451,6 +561,7 @@ function SignIn() {
   );
 }
 
+// Sign Out Component
 function SignOut() {
   return (
     auth.currentUser && (
@@ -461,6 +572,7 @@ function SignOut() {
   );
 }
 
+// Music Player Component
 function MusicPlayer() {
   const {
     audioRef,
@@ -471,10 +583,8 @@ function MusicPlayer() {
     previousTrack
   } = useMusicPlayer();
 
-  // Default fallback album cover
   const defaultAlbumCover = "https://i.scdn.co/image/ab67616d0000b27398b1c6c0d05f8841f08a9eca";
 
-  // Handle image loading errors
   const handleImageError = (e) => {
     e.target.src = defaultAlbumCover;
   };
@@ -507,8 +617,10 @@ function MusicPlayer() {
   );
 }
 
+// Chat Room Component
 function ChatRoom() {
   const dummy = useRef();
+  const fileInputRef = useRef();
   const messagesRef = collection(firestore, "messages");
   const [user] = useAuthState(auth);
   const { displayData } = useUserProfile(user);
@@ -517,6 +629,8 @@ function ChatRoom() {
   const [messages] = useCollectionData(q, { idField: "id" });
 
   const [formValue, setFormValue] = useState("");
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   // Auto-scroll when messages update
   useEffect(() => {
@@ -525,25 +639,96 @@ function ChatRoom() {
     }
   }, [messages]);
 
+  const handleImageSelect = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 10 * 1024 * 1024) {
+        alert("File size too large. Please select an image under 10MB.");
+        return;
+      }
+
+      if (!file.type.startsWith('image/')) {
+        alert("Please select an image file.");
+        return;
+      }
+
+      setSelectedImage(file);
+    }
+  };
+
+  const removeSelectedImage = () => {
+    setSelectedImage(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
   const sendMessage = async (e) => {
     e.preventDefault();
-    if (!formValue.trim()) return;
+
+    if (!formValue.trim() && !selectedImage) {
+      return;
+    }
+
+    setIsUploading(true);
 
     const { uid } = auth.currentUser;
+    let imageUrl = null;
 
     try {
-      // Use current display data from profile (custom or Google fallback)
-      await addDoc(messagesRef, {
-        text: formValue,
+      // Upload image if selected
+      if (selectedImage) {
+        const uploadResult = await uploadImage(selectedImage, uid);
+
+        if (uploadResult.success) {
+          imageUrl = uploadResult.url;
+        } else {
+          alert("Failed to upload image: " + uploadResult.error);
+          setIsUploading(false);
+          return;
+        }
+      }
+
+      // Create message data
+      const messageData = {
         createdAt: serverTimestamp(),
         uid,
-        photoURL: displayData.photoURL,
-        displayName: displayData.displayName,
-      });
+        photoURL: displayData.photoURL || null,
+        displayName: displayData.displayName || "Anonymous",
+      };
 
+      if (formValue.trim()) {
+        messageData.text = formValue.trim();
+      }
+
+      if (imageUrl) {
+        messageData.imageUrl = imageUrl;
+        messageData.messageType = 'image';
+      } else {
+        messageData.messageType = 'text';
+      }
+
+      await addDoc(messagesRef, messageData);
+
+      // Clear form
       setFormValue("");
+      setSelectedImage(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+
     } catch (err) {
       console.error("Error sending message:", err);
+
+      if (err.code === 'permission-denied') {
+        alert("Permission denied. Check your Firestore security rules.");
+      } else if (err.code === 'unavailable') {
+        alert("Firestore is currently unavailable. Please try again.");
+      } else {
+        alert(`Error: ${err.message}`);
+      }
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -560,14 +745,49 @@ function ChatRoom() {
             <span ref={dummy}></span>
           </main>
 
+          {/* Image preview if selected */}
+          {selectedImage && (
+            <div className="image-preview-container">
+              <ImagePreview file={selectedImage} onRemove={removeSelectedImage} />
+            </div>
+          )}
+
           <form onSubmit={sendMessage} className="chat-form">
             <input
               value={formValue}
               onChange={(e) => setFormValue(e.target.value)}
               placeholder="Message something dude"
+              disabled={isUploading}
             />
-            <button type="submit" disabled={!formValue.trim()}>
-              <i className="bi bi-send-fill"></i>
+
+            {/* Hidden file input */}
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleImageSelect}
+              accept="image/*"
+              style={{ display: 'none' }}
+            />
+
+            {/* Image upload button */}
+            <button
+              type="button"
+              className="image-upload-btn"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploading}
+            >
+              <i className="bi bi-image"></i>
+            </button>
+
+            <button
+              type="submit"
+              disabled={(!formValue.trim() && !selectedImage) || isUploading}
+            >
+              {isUploading ? (
+                <i className="bi bi-hourglass-split"></i>
+              ) : (
+                <i className="bi bi-send-fill"></i>
+              )}
             </button>
           </form>
         </div>
@@ -576,15 +796,26 @@ function ChatRoom() {
   );
 }
 
+// Chat Message Component
 function ChatMessage({ message }) {
-  const { text, uid, photoURL, displayName, createdAt } = message;
+  const { text, uid, photoURL, displayName, createdAt, imageUrl, messageType } = message;
   const messageClass = uid === auth.currentUser.uid ? "sent" : "received";
+  const [imageLoading, setImageLoading] = useState(true);
+  const [imageError, setImageError] = useState(false);
 
-  // Format timestamp
   const formatTime = (timestamp) => {
     if (!timestamp) return "";
     const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
+  const handleImageLoad = () => {
+    setImageLoading(false);
+  };
+
+  const handleImageError = () => {
+    setImageLoading(false);
+    setImageError(true);
   };
 
   return (
@@ -592,13 +823,43 @@ function ChatMessage({ message }) {
       <img
         src={photoURL || "https://ui-avatars.com/api/?name=" + encodeURIComponent(displayName || "User")}
         alt="avatar"
+        className="user-avatar"
       />
       <div className="message-content">
         <div className="message-header">
           <span className="message-timestamp">{formatTime(createdAt)}</span>
           <strong>{displayName || "Unknown"}</strong>
         </div>
-        <p>{text}</p>
+
+        {/* Display text if present */}
+        {text && <p>{text}</p>}
+
+        {/* Display image if present */}
+        {imageUrl && (
+          <div className="message-image-container">
+            {imageLoading && (
+              <div className="image-loading">
+                <i className="bi bi-hourglass-split"></i>
+                <span>Loading image...</span>
+              </div>
+            )}
+            {!imageError ? (
+              <img
+                src={imageUrl}
+                alt="Shared image"
+                className="message-image"
+                onLoad={handleImageLoad}
+                onError={handleImageError}
+                style={{ display: imageLoading ? 'none' : 'block' }}
+              />
+            ) : (
+              <div className="image-error">
+                <i className="bi bi-exclamation-triangle"></i>
+                <span>Failed to load image</span>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
