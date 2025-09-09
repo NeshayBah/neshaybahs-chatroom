@@ -1281,6 +1281,255 @@ header h1 {
 }
 
 /* ==============================================
+   REACTIONS
+   ============================================== */
+
+/* Message Reactions */
+.message-reactions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 8px;
+  margin-bottom: 4px;
+}
+
+.reaction-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  font-size: 12px;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(10px);
+  min-height: 24px;
+}
+
+.reaction-pill:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: scale(1.05);
+}
+
+.reaction-pill.user-reacted {
+  background: rgba(0, 123, 255, 0.3);
+  border-color: rgba(0, 123, 255, 0.5);
+  color: #87CEEB;
+}
+
+.reaction-pill.user-reacted:hover {
+  background: rgba(0, 123, 255, 0.4);
+  border-color: rgba(0, 123, 255, 0.6);
+}
+
+.reaction-emoji {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.reaction-count {
+  font-size: 11px;
+  font-weight: 500;
+  min-width: 12px;
+  text-align: center;
+}
+
+/* Reaction Menu */
+.reaction-menu {
+  position: absolute;
+  top: -45px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  animation: reactionMenuSlide 0.2s ease-out;
+}
+
+.reaction-menu-content {
+  display: flex;
+  gap: 4px;
+  padding: 8px;
+  background: rgba(0, 0, 0, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 25px;
+  backdrop-filter: blur(20px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.reaction-menu-emoji {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: none;
+  border-radius: 50%;
+  font-size: 18px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.reaction-menu-emoji:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: scale(1.2);
+}
+
+.reaction-menu-emoji:active {
+  transform: scale(1.1);
+}
+
+/* Quick Reaction Button */
+.quick-reaction-btn {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 24px;
+  height: 24px;
+  background: rgba(0, 0, 0, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  color: white;
+  font-size: 12px;
+  cursor: pointer;
+  opacity: 0;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(10px);
+}
+
+.message:hover .quick-reaction-btn {
+  opacity: 1;
+}
+
+.quick-reaction-btn:hover {
+  background: rgba(0, 0, 0, 0.9);
+  border-color: rgba(255, 255, 255, 0.4);
+  transform: scale(1.1);
+}
+
+/* Message container positioning for reactions */
+.message-content {
+  position: relative;
+}
+
+/* Animations */
+@keyframes reactionMenuSlide {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(10px) scale(0.8);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(1);
+  }
+}
+
+@keyframes reactionPop {
+  0% {
+    transform: scale(0);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.reaction-pill {
+  animation: reactionPop 0.3s ease-out;
+}
+
+/* Mobile specific adjustments */
+@media (max-width: 768px) {
+  .reaction-menu {
+    top: -50px;
+  }
+  
+  .reaction-menu-content {
+    padding: 10px;
+    gap: 6px;
+  }
+  
+  .reaction-menu-emoji {
+    width: 36px;
+    height: 36px;
+    font-size: 20px;
+  }
+  
+  .quick-reaction-btn {
+    opacity: 1; /* Always visible on mobile */
+    width: 28px;
+    height: 28px;
+    font-size: 14px;
+  }
+  
+  .reaction-pill {
+    padding: 4px 10px;
+    min-height: 28px;
+  }
+  
+  .reaction-emoji {
+    font-size: 16px;
+  }
+  
+  .reaction-count {
+    font-size: 12px;
+  }
+}
+
+/* Dark theme specific adjustments */
+.message.sent .reaction-pill {
+  background: rgba(0, 0, 0, 0.3);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.message.sent .reaction-pill:hover {
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.message.sent .reaction-pill.user-reacted {
+  background: rgba(0, 123, 255, 0.4);
+  border-color: rgba(0, 123, 255, 0.6);
+}
+
+/* Tooltip style for reaction users */
+.reaction-pill {
+  position: relative;
+}
+
+.reaction-pill::after {
+  content: attr(title);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.9);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.2s ease;
+  z-index: 1001;
+  margin-bottom: 5px;
+}
+
+.reaction-pill:hover::after {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* ==============================================
    ADDITIONAL VISUAL ENHANCEMENTS
    ============================================== */
 

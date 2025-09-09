@@ -900,10 +900,10 @@ function ChatRoom() {
   );
 }
 
-// Chat Message Component
+// Chat Message Component with Reactions
 function ChatMessage({ message, onDelete, onStartEdit, onCancelEdit, onSaveEdit, editingMessage, editText, setEditText }) {
-  const messageId = message.id || message.docId || message.key;
-  const { text, uid, photoURL, displayName, createdAt, imageUrl, messageType, editedAt } = message;
+  const messageId = message.id;
+  const { text, uid, photoURL, displayName, createdAt, imageUrl, editedAt, reactions } = message;
   const messageClass = uid === auth.currentUser.uid ? "sent" : "received";
   const isOwner = uid === auth.currentUser.uid;
   const isEditing = editingMessage === messageId;
@@ -911,39 +911,153 @@ function ChatMessage({ message, onDelete, onStartEdit, onCancelEdit, onSaveEdit,
   const [imageLoading, setImageLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
+  const [showReactionMenu, setShowReactionMenu] = useState(false);
   const [longPressTimer, setLongPressTimer] = useState(null);
+  const [reactionTimer, setReactionTimer] = useState(null);
+
   const menuRef = useRef(null);
+  const reactionMenuRef = useRef(null);
+  const clickTimeoutRef = useRef(null);
+  const clickCountRef = useRef(0);
+
+  const [user] = useAuthState(auth);
+  const { displayData } = useUserProfile(user);
+
+  const availableEmojis = ['❤️', '😂', '😮', '😢', '😡', '👍', '👎', '🔥', '✨', '💯'];
+
+  // Add reaction to message
+  const addReaction = async (emoji) => {
+    if (!user || !messageId) return;
+
+    try {
+      const messageRef = doc(firestore, "messages", messageId);
+      const messageDoc = await getDoc(messageRef);
+      
+      if (messageDoc.exists()) {
+        const currentReactions = messageDoc.data().reactions || {};
+        
+        if (!currentReactions[emoji]) {
+          currentReactions[emoji] = {};
+        }
+        
+        // Toggle reaction
+        if (currentReactions[emoji][user.uid]) {
+          delete currentReactions[emoji][user.uid];
+          if (Object.keys(currentReactions[emoji]).length === 0) {
+            delete currentReactions[emoji];
+          }
+        } else {
+          currentReactions[emoji][user.uid] = {
+            displayName: displayData.displayName,
+            timestamp: serverTimestamp()
+          };
+        }
+        
+        await updateDoc(messageRef, { reactions: currentReactions });
+      }
+    } catch (error) {
+      console.error("Error adding reaction:", error);
+    }
+  };
+
+  // Handle double-click for quick heart reaction
+  const handleMessageClick = (e) => {
+    if (e.target.tagName === 'BUTTON' || e.target.closest('button') || e.target.closest('.reaction-pill')) {
+      return;
+    }
+
+    clickCountRef.current += 1;
+    
+    if (clickTimeoutRef.current) {
+      clearTimeout(clickTimeoutRef.current);
+    }
+    
+    clickTimeoutRef.current = setTimeout(() => {
+      if (clickCountRef.current === 2) {
+        addReaction('❤️');
+      }
+      clickCountRef.current = 0;
+    }, 300);
+  };
+
+  // Handle reaction selection
+  const handleReactionSelect = (emoji) => {
+    addReaction(emoji);
+    setShowReactionMenu(false);
+  };
+
+  // Get reaction data for display
+  const getReactionData = () => {
+    if (!reactions) return [];
+    
+    return Object.entries(reactions)
+      .map(([emoji, users]) => ({
+        emoji,
+        count: Object.keys(users).length,
+        users: Object.entries(users).map(([userId, userData]) => ({
+          userId,
+          displayName: userData.displayName
+        })),
+        userReacted: user && users[user.uid]
+      }))
+      .filter(reaction => reaction.count > 0);
+  };
+
+  const reactionData = getReactionData();
 
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (menuRef.current && !menuRef.current.contains(event.target)) {
         setShowMenu(false);
       }
+      if (reactionMenuRef.current && !reactionMenuRef.current.contains(event.target)) {
+        setShowReactionMenu(false);
+      }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
     document.addEventListener('touchstart', handleClickOutside);
+    
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
       document.removeEventListener('touchstart', handleClickOutside);
+      if (clickTimeoutRef.current) {
+        clearTimeout(clickTimeoutRef.current);
+      }
+      if (longPressTimer) {
+        clearTimeout(longPressTimer);
+      }
+      if (reactionTimer) {
+        clearTimeout(reactionTimer);
+      }
     };
-  }, []);
+  }, [longPressTimer, reactionTimer]);
 
-  // Mobile long press for menu
+  // Mobile long press handlers
   const handleTouchStart = (e) => {
-    if (!isOwner) return;
-
-    const timer = setTimeout(() => {
-      setShowMenu(true);
+    // Reaction menu timer
+    const rTimer = setTimeout(() => {
+      setShowReactionMenu(true);
       if (navigator.vibrate) {
         navigator.vibrate(50);
       }
     }, 500);
+    setReactionTimer(rTimer);
 
-    setLongPressTimer(timer);
+    // Owner menu timer (longer press)
+    if (isOwner) {
+      const mTimer = setTimeout(() => {
+        setShowMenu(true);
+      }, 800);
+      setLongPressTimer(mTimer);
+    }
   };
 
   const handleTouchEnd = () => {
+    if (reactionTimer) {
+      clearTimeout(reactionTimer);
+      setReactionTimer(null);
+    }
     if (longPressTimer) {
       clearTimeout(longPressTimer);
       setLongPressTimer(null);
@@ -991,10 +1105,11 @@ function ChatMessage({ message, onDelete, onStartEdit, onCancelEdit, onSaveEdit,
   return (
     <div
       className={`message ${messageClass} ${isOwner ? 'message-owner' : ''}`}
-      onMouseEnter={() => isOwner && setShowMenu(true)}
+      onMouseEnter={() => setShowMenu(true)}
       onMouseLeave={() => setShowMenu(false)}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
+      onClick={handleMessageClick}
     >
       <img
         src={photoURL || "https://ui-avatars.com/api/?name=" + encodeURIComponent(displayName || "User")}
@@ -1064,6 +1179,44 @@ function ChatMessage({ message, onDelete, onStartEdit, onCancelEdit, onSaveEdit,
           </div>
         )}
 
+        {/* Message Reactions */}
+        {reactionData.length > 0 && (
+          <div className="message-reactions">
+            {reactionData.map(({ emoji, count, users, userReacted }) => (
+              <button
+                key={emoji}
+                className={`reaction-pill ${userReacted ? 'user-reacted' : ''}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleReactionSelect(emoji);
+                }}
+                title={users.map(u => u.displayName).join(', ')}
+              >
+                <span className="reaction-emoji">{emoji}</span>
+                <span className="reaction-count">{count}</span>
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Reaction Menu */}
+        {showReactionMenu && (
+          <div className="reaction-menu" ref={reactionMenuRef}>
+            <div className="reaction-menu-content">
+              {availableEmojis.map(emoji => (
+                <button
+                  key={emoji}
+                  className="reaction-menu-emoji"
+                  onClick={() => handleReactionSelect(emoji)}
+                >
+                  {emoji}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Message Menu */}
         {isOwner && showMenu && !isEditing && (
           <div className="message-menu" ref={menuRef}>
             {text && (
@@ -1084,6 +1237,18 @@ function ChatMessage({ message, onDelete, onStartEdit, onCancelEdit, onSaveEdit,
             </button>
           </div>
         )}
+
+        {/* Quick Reaction Button (Desktop) */}
+        <button
+          className="quick-reaction-btn"
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowReactionMenu(!showReactionMenu);
+          }}
+          title="Add reaction"
+        >
+          <i className="bi bi-emoji-smile"></i>
+        </button>
       </div>
     </div>
   );
