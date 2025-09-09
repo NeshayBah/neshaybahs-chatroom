@@ -985,6 +985,336 @@ header h1 {
 }
 
 /* ==============================================
+   MESSAGE MENU STYLES
+   ============================================== */
+
+/* Base message styling updates */
+.message {
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.message-owner:hover {
+  background: rgba(199, 125, 255, 0.05);
+  border-radius: 12px;
+  padding: 8px;
+  margin: -8px;
+}
+
+/* Message menu container */
+.message-menu {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: rgba(16, 6, 38, 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(199, 125, 255, 0.3);
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(123, 44, 191, 0.3);
+  z-index: 100;
+  padding: 4px;
+  display: flex;
+  gap: 2px;
+  animation: menuAppear 0.2s ease-out;
+}
+
+/* For sent messages, position menu on the left */
+.message.sent .message-menu {
+  right: auto;
+  left: -8px;
+}
+
+@keyframes menuAppear {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Menu item buttons */
+.message-menu-item {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: none;
+  border-radius: 6px;
+  color: white;
+  padding: 8px 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  min-width: 70px;
+  justify-content: center;
+}
+
+.message-menu-item:hover {
+  background: rgba(199, 125, 255, 0.2);
+  border: 1px solid rgba(199, 125, 255, 0.3);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(123, 44, 191, 0.2);
+}
+
+.message-menu-item i {
+  font-size: 0.9rem;
+}
+
+/* Delete button special styling */
+.message-menu-delete:hover {
+  background: rgba(220, 53, 69, 0.2);
+  border-color: rgba(220, 53, 69, 0.4);
+  color: #ff6b6b;
+}
+
+/* ==============================================
+   MESSAGE EDITING STYLES
+   ============================================== */
+
+.message-edit-container {
+  margin-top: 8px;
+  width: 100%;
+  min-width: 200px;
+}
+
+.message-edit-input {
+  width: 100%;
+  min-height: 60px;
+  background: rgba(45, 27, 105, 0.6);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(199, 125, 255, 0.3);
+  border-radius: 12px;
+  color: white;
+  padding: 12px;
+  font-family: inherit;
+  font-size: 0.95rem;
+  line-height: 1.4;
+  resize: vertical;
+  transition: all 0.3s ease;
+}
+
+.message-edit-input:focus {
+  outline: none;
+  border-color: #c77dff;
+  box-shadow: 0 0 0 3px rgba(199, 125, 255, 0.2);
+  background: rgba(45, 27, 105, 0.8);
+}
+
+.message-edit-input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.message-edit-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  justify-content: flex-start;
+}
+
+.message.sent .message-edit-actions {
+  justify-content: flex-end;
+}
+
+.message-edit-actions .btn {
+  font-size: 0.85rem;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 500;
+}
+
+.message-edit-actions .btn-primary {
+  background: linear-gradient(135deg, #7b2cbf, #c77dff);
+  color: white;
+}
+
+.message-edit-actions .btn-primary:hover {
+  background: linear-gradient(135deg, #9b5de5, #c77dff);
+  transform: translateY(-1px);
+}
+
+.message-edit-actions .btn-secondary {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.message-edit-actions .btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+/* Edited indicator */
+.edited-indicator {
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.4);
+  font-style: italic;
+  font-weight: 400;
+}
+
+/* ==============================================
+   MOBILE RESPONSIVE ADJUSTMENTS
+   ============================================== */
+
+@media (max-width: 768px) {
+  /* Make menu items slightly larger for touch */
+  .message-menu-item {
+    padding: 10px 12px;
+    font-size: 0.9rem;
+    min-width: 80px;
+  }
+
+  .message-menu-item i {
+    font-size: 1rem;
+  }
+
+  /* Adjust menu positioning for mobile */
+  .message-menu {
+    top: -10px;
+    right: -10px;
+    padding: 6px;
+    gap: 4px;
+  }
+
+  .message.sent .message-menu {
+    right: auto;
+    left: -10px;
+  }
+
+  /* Mobile hover effect */
+  .message-owner:hover {
+    background: transparent;
+    border-radius: 0;
+    padding: 0;
+    margin: 0;
+  }
+
+  /* Edit input adjustments */
+  .message-edit-input {
+    font-size: 16px; /* Prevents zoom on iOS */
+    min-height: 80px;
+  }
+
+  .message-edit-actions {
+    flex-wrap: wrap;
+  }
+
+  .message-edit-actions .btn {
+    flex: 1;
+    min-width: 80px;
+  }
+}
+
+/* ==============================================
+   TOUCH INTERACTION IMPROVEMENTS
+   ============================================== */
+
+/* Add visual feedback for long press on mobile */
+@media (hover: none) and (pointer: coarse) {
+  .message-owner {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
+
+  .message-owner:active {
+    background: rgba(199, 125, 255, 0.1);
+    border-radius: 12px;
+    transition: background 0.1s ease;
+  }
+}
+
+/* ==============================================
+   ACCESSIBILITY IMPROVEMENTS
+   ============================================== */
+
+/* Focus states for keyboard navigation */
+.message-menu-item:focus {
+  outline: 2px solid rgba(199, 125, 255, 0.6);
+  outline-offset: 2px;
+}
+
+.message-edit-input:focus {
+  outline: none;
+  border-color: #c77dff;
+  box-shadow: 0 0 0 3px rgba(199, 125, 255, 0.2);
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .message-menu {
+    border: 2px solid white;
+    background: black;
+  }
+
+  .message-menu-item {
+    border: 1px solid white;
+  }
+
+  .message-edit-input {
+    border: 2px solid white;
+    background: black;
+  }
+}
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  .message-menu,
+  .message-menu-item,
+  .message-edit-input,
+  .message-edit-actions .btn {
+    transition: none;
+    animation: none;
+  }
+
+  .menuAppear {
+    animation: none;
+  }
+}
+
+/* ==============================================
+   ADDITIONAL VISUAL ENHANCEMENTS
+   ============================================== */
+
+/* Subtle glow effect for menu */
+.message-menu {
+  box-shadow: 
+    0 4px 20px rgba(123, 44, 191, 0.3),
+    0 0 0 1px rgba(199, 125, 255, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+/* Menu arrow (optional) */
+.message-menu::before {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 6px solid rgba(16, 6, 38, 0.95);
+  filter: drop-shadow(0 2px 4px rgba(123, 44, 191, 0.2));
+}
+
+/* Hide arrow on mobile to save space */
+@media (max-width: 768px) {
+  .message-menu::before {
+    display: none;
+  }
+}
+
+/* ==============================================
    SCROLLBAR CUSTOMIZATION
    ============================================== */
 

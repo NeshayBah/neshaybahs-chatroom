@@ -5,14 +5,14 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 
 import { initializeApp } from "firebase/app";
-import { getFirestore, collection, query, orderBy, limit, addDoc, serverTimestamp, doc, getDoc, setDoc } from "firebase/firestore";
+import { getFirestore, collection, query, orderBy, limit, addDoc, serverTimestamp, doc, getDoc, setDoc, deleteDoc, updateDoc } from "firebase/firestore";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
 import { getAnalytics } from "firebase/analytics";
 
 import { useAuthState } from "react-firebase-hooks/auth";
-import { useCollectionData, useDocument } from "react-firebase-hooks/firestore";
+import { useCollectionData, useDocument, useCollection } from "react-firebase-hooks/firestore";
 
-// Firebase config
+// Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyBQSuvCd5mb-lbvoaZrwGl7fXhFRZWI0ZU",
   authDomain: "neshaybahs-chatroom.firebaseapp.com",
@@ -22,7 +22,6 @@ const firebaseConfig = {
   appId: "1:120115708605:web:b2956f68690d946f5badd4"
 };
 
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const firestore = getFirestore(app);
@@ -40,7 +39,6 @@ const useMusicPlayer = () => {
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
 
-  // Function to convert song name to album cover filename
   const getSongCoverFileName = (filename) => {
     const nameWithoutExtension = filename.replace('.mp3', '');
     const parts = nameWithoutExtension.split(' - ');
@@ -56,7 +54,6 @@ const useMusicPlayer = () => {
     return `${cleanName}.png`;
   };
 
-  // Initialize playlist from music folder
   useEffect(() => {
     const musicFiles = [
       'Frank Ocean - American Wedding.mp3',
@@ -80,7 +77,6 @@ const useMusicPlayer = () => {
     setPlaylist(processedPlaylist);
   }, []);
 
-  // Audio event listeners
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -100,7 +96,6 @@ const useMusicPlayer = () => {
     };
   }, []);
 
-  // Load current track
   useEffect(() => {
     if (playlist.length > 0 && audioRef.current) {
       audioRef.current.src = playlist[currentTrackIndex]?.url;
@@ -161,7 +156,7 @@ const useMusicPlayer = () => {
   };
 };
 
-// User profile helper functions
+// User Profile Management
 const createOrUpdateUserProfile = async (uid, profileData) => {
   try {
     const userDocRef = doc(firestore, "userProfiles", uid);
@@ -183,7 +178,6 @@ const getUserDisplayData = (customProfile, googleUser) => {
   };
 };
 
-// Custom hook to manage user profile
 const useUserProfile = (user) => {
   const userDocRef = user ? doc(firestore, "userProfiles", user.uid) : null;
   const [profileDoc, loading, error] = useDocument(userDocRef);
@@ -216,7 +210,7 @@ const useUserProfile = (user) => {
   };
 };
 
-// Image upload utility function
+// Image Upload Utility
 const uploadImage = async (file, userId) => {
   try {
     if (file.size > 10 * 1024 * 1024) {
@@ -271,21 +265,16 @@ const uploadImage = async (file, userId) => {
   } catch (error) {
     console.error("Error uploading image to Cloudinary:", error);
 
-    if (error.message.includes('Invalid upload preset')) {
-      return {
-        success: false,
-        error: "Upload preset 'chat_uploads' not found or not configured properly in Cloudinary"
-      };
-    } else if (error.message.includes('Invalid cloud name')) {
-      return {
-        success: false,
-        error: "Cloud name 'dssbbkavm' not found in Cloudinary"
-      };
-    } else if (error.message.includes('Unauthorized')) {
-      return {
-        success: false,
-        error: "Upload preset is not configured for unsigned uploads"
-      };
+    const errorMessages = {
+      'Invalid upload preset': "Upload preset 'chat_uploads' not found or not configured properly in Cloudinary",
+      'Invalid cloud name': "Cloud name 'dssbbkavm' not found in Cloudinary",
+      'Unauthorized': "Upload preset is not configured for unsigned uploads"
+    };
+
+    for (const [key, message] of Object.entries(errorMessages)) {
+      if (error.message.includes(key)) {
+        return { success: false, error: message };
+      }
     }
 
     return {
@@ -295,16 +284,14 @@ const uploadImage = async (file, userId) => {
   }
 };
 
-// Image preview component
+// Image Preview Component
 function ImagePreview({ file, onRemove }) {
   const [preview, setPreview] = useState(null);
 
   useEffect(() => {
     if (file) {
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreview(reader.result);
-      };
+      reader.onloadend = () => setPreview(reader.result);
       reader.readAsDataURL(file);
     }
 
@@ -320,11 +307,7 @@ function ImagePreview({ file, onRemove }) {
   return (
     <div className="image-preview">
       <img src={preview} alt="Preview" />
-      <button
-        className="remove-preview-btn"
-        onClick={onRemove}
-        type="button"
-      >
+      <button className="remove-preview-btn" onClick={onRemove} type="button">
         <i className="bi bi-x"></i>
       </button>
     </div>
@@ -336,7 +319,7 @@ function App() {
   const [user] = useAuthState(auth);
   const [showSettings, setShowSettings] = useState(false);
 
-  // Update CSS custom property for viewport height on mobile
+  // Fix viewport height on mobile devices
   useEffect(() => {
     const updateVH = () => {
       const vh = window.innerHeight * 0.01;
@@ -361,9 +344,7 @@ function App() {
             src={`${import.meta.env.BASE_URL}images/logo.png`}
             alt="Logo"
             style={{ height: '40px', width: 'auto', marginRight: '15px' }}
-            onError={(e) => {
-              e.target.style.display = 'none';
-            }}
+            onError={(e) => { e.target.style.display = 'none'; }}
           />
           <h1>NeshayBahs Chatroom</h1>
         </div>
@@ -384,7 +365,6 @@ function App() {
         {user ? <ChatRoom /> : <SignIn />}
       </div>
 
-      {/* Settings Panel */}
       {showSettings && (
         <>
           <div className="settings-overlay" onClick={() => setShowSettings(false)}></div>
@@ -449,7 +429,6 @@ function ProfileSettings({ user, onClose }) {
     try {
       let photoURL = tempPhoto;
 
-      // Upload file if selected
       if (selectedFile) {
         const uploadResult = await uploadImage(selectedFile, user.uid);
         if (uploadResult.success) {
@@ -502,21 +481,14 @@ function ProfileSettings({ user, onClose }) {
         <div className="profile-display">
           <div className="d-flex align-items-center gap-3 mb-3">
             <img
-              src={
-                displayData.photoURL ||
-                `https://ui-avatars.com/api/?name=${encodeURIComponent(
-                  displayData.displayName
-                )}`
-              }
+              src={displayData.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayData.displayName)}`}
               alt="Profile"
               className="profile-avatar"
             />
             <div>
               <h5 className="mb-0">{displayData.displayName}</h5>
               <small>
-                {customProfile?.displayName
-                  ? "Custom Profile"
-                  : "Using Google Profile"}
+                {customProfile?.displayName ? "Custom Profile" : "Using Google Profile"}
               </small>
             </div>
           </div>
@@ -573,11 +545,7 @@ function ProfileSettings({ user, onClose }) {
         </div>
 
         <div className="d-flex gap-2 flex-wrap">
-          <button
-            className="btn btn-primary"
-            onClick={handleSave}
-            disabled={isSaving}
-          >
+          <button className="btn btn-primary" onClick={handleSave} disabled={isSaving}>
             {isSaving ? "Saving..." : "Save"}
           </button>
 
@@ -604,7 +572,7 @@ function ProfileSettings({ user, onClose }) {
   );
 }
 
-// Sign In Component
+// Authentication Components
 function SignIn() {
   const signInWithGoogle = async () => {
     const provider = new GoogleAuthProvider();
@@ -621,7 +589,6 @@ function SignIn() {
   );
 }
 
-// Sign Out Component
 function SignOut() {
   return (
     auth.currentUser && (
@@ -632,17 +599,9 @@ function SignOut() {
   );
 }
 
-// Mobile Mini Player Component (separate from desktop player)
+// Music Player Components
 function MobileMiniPlayer() {
-  const {
-    audioRef,
-    currentTrack,
-    isPlaying,
-    togglePlayPause,
-    nextTrack,
-    previousTrack
-  } = useMusicPlayer();
-
+  const { audioRef, currentTrack, isPlaying, togglePlayPause, nextTrack, previousTrack } = useMusicPlayer();
   const defaultAlbumCover = "https://i.scdn.co/image/ab67616d0000b27398b1c6c0d05f8841f08a9eca";
 
   const handleImageError = (e) => {
@@ -677,17 +636,8 @@ function MobileMiniPlayer() {
   );
 }
 
-// Music Player Component (desktop only now)
 function MusicPlayer() {
-  const {
-    audioRef,
-    currentTrack,
-    isPlaying,
-    togglePlayPause,
-    nextTrack,
-    previousTrack
-  } = useMusicPlayer();
-
+  const { audioRef, currentTrack, isPlaying, togglePlayPause, nextTrack, previousTrack } = useMusicPlayer();
   const defaultAlbumCover = "https://i.scdn.co/image/ab67616d0000b27398b1c6c0d05f8841f08a9eca";
 
   const handleImageError = (e) => {
@@ -731,18 +681,65 @@ function ChatRoom() {
   const { displayData } = useUserProfile(user);
 
   const q = query(messagesRef, orderBy("createdAt"), limit(100));
-  const [messages] = useCollectionData(q, { idField: "id" });
+  const [snapshot, loading, error] = useCollection(q);
 
   const [formValue, setFormValue] = useState("");
   const [selectedImage, setSelectedImage] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [editingMessage, setEditingMessage] = useState(null);
+  const [editText, setEditText] = useState("");
 
-  // Auto-scroll when messages update
+  const messages = snapshot?.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data()
+  })) || [];
+
   useEffect(() => {
     if (dummy.current) {
       dummy.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages]);
+
+  const deleteMessage = async (messageId) => {
+    if (window.confirm("Are you sure you want to delete this message?")) {
+      try {
+        await deleteDoc(doc(firestore, "messages", messageId));
+      } catch (error) {
+        console.error("Error deleting message:", error);
+        alert("Failed to delete message. Please try again.");
+      }
+    }
+  };
+
+  const startEditing = (message) => {
+    setEditingMessage(message.id);
+    setEditText(message.text || "");
+  };
+
+  const cancelEditing = () => {
+    setEditingMessage(null);
+    setEditText("");
+  };
+
+  const saveEdit = async (messageId) => {
+    if (!messageId || !editText.trim()) {
+      alert("Message cannot be empty");
+      return;
+    }
+
+    try {
+      const messageRef = doc(firestore, "messages", messageId);
+      await updateDoc(messageRef, {
+        text: editText.trim(),
+        editedAt: serverTimestamp()
+      });
+      setEditingMessage(null);
+      setEditText("");
+    } catch (error) {
+      console.error("Error updating message:", error);
+      alert("Failed to update message. Please try again.");
+    }
+  };
 
   const handleImageSelect = (e) => {
     const file = e.target.files[0];
@@ -771,9 +768,7 @@ function ChatRoom() {
   const sendMessage = async (e) => {
     e.preventDefault();
 
-    if (!formValue.trim() && !selectedImage) {
-      return;
-    }
+    if (!formValue.trim() && !selectedImage) return;
 
     setIsUploading(true);
 
@@ -781,7 +776,6 @@ function ChatRoom() {
     let imageUrl = null;
 
     try {
-      // Upload image if selected
       if (selectedImage) {
         const uploadResult = await uploadImage(selectedImage, uid);
 
@@ -794,7 +788,6 @@ function ChatRoom() {
         }
       }
 
-      // Create message data
       const messageData = {
         createdAt: serverTimestamp(),
         uid,
@@ -815,7 +808,6 @@ function ChatRoom() {
 
       await addDoc(messagesRef, messageData);
 
-      // Clear form
       setFormValue("");
       setSelectedImage(null);
       if (fileInputRef.current) {
@@ -825,13 +817,12 @@ function ChatRoom() {
     } catch (err) {
       console.error("Error sending message:", err);
 
-      if (err.code === 'permission-denied') {
-        alert("Permission denied. Check your Firestore security rules.");
-      } else if (err.code === 'unavailable') {
-        alert("Firestore is currently unavailable. Please try again.");
-      } else {
-        alert(`Error: ${err.message}`);
-      }
+      const errorMessages = {
+        'permission-denied': "Permission denied. Check your Firestore security rules.",
+        'unavailable': "Firestore is currently unavailable. Please try again."
+      };
+
+      alert(errorMessages[err.code] || `Error: ${err.message}`);
     } finally {
       setIsUploading(false);
     }
@@ -839,21 +830,28 @@ function ChatRoom() {
 
   return (
     <>
-      {/* Mobile Mini Player - show only on mobile */}
       <MobileMiniPlayer />
-
-      {/* Desktop Music Player */}
       <MusicPlayer />
 
-      {/* Chat panel */}
       <div className="chat-panel d-flex flex-column">
         <div className="messages-container flex-grow-1">
           <main className="messages-list">
-            {messages && messages.map((msg) => <ChatMessage key={msg.id} message={msg} />)}
+            {messages && messages.map((msg) => (
+              <ChatMessage
+                key={msg.id}
+                message={msg}
+                onDelete={deleteMessage}
+                onStartEdit={startEditing}
+                onCancelEdit={cancelEditing}
+                onSaveEdit={saveEdit}
+                editingMessage={editingMessage}
+                editText={editText}
+                setEditText={setEditText}
+              />
+            ))}
             <span ref={dummy}></span>
           </main>
 
-          {/* Image preview if selected */}
           {selectedImage && (
             <div className="image-preview-container">
               <ImagePreview file={selectedImage} onRemove={removeSelectedImage} />
@@ -868,7 +866,6 @@ function ChatRoom() {
               disabled={isUploading}
             />
 
-            {/* Hidden file input */}
             <input
               type="file"
               ref={fileInputRef}
@@ -877,7 +874,6 @@ function ChatRoom() {
               style={{ display: 'none' }}
             />
 
-            {/* Image upload button */}
             <button
               type="button"
               className="image-upload-btn"
@@ -905,22 +901,63 @@ function ChatRoom() {
 }
 
 // Chat Message Component
-function ChatMessage({ message }) {
-  const { text, uid, photoURL, displayName, createdAt, imageUrl, messageType } = message;
+function ChatMessage({ message, onDelete, onStartEdit, onCancelEdit, onSaveEdit, editingMessage, editText, setEditText }) {
+  const messageId = message.id || message.docId || message.key;
+  const { text, uid, photoURL, displayName, createdAt, imageUrl, messageType, editedAt } = message;
   const messageClass = uid === auth.currentUser.uid ? "sent" : "received";
+  const isOwner = uid === auth.currentUser.uid;
+  const isEditing = editingMessage === messageId;
+
   const [imageLoading, setImageLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
+  const [longPressTimer, setLongPressTimer] = useState(null);
+  const menuRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setShowMenu(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, []);
+
+  // Mobile long press for menu
+  const handleTouchStart = (e) => {
+    if (!isOwner) return;
+
+    const timer = setTimeout(() => {
+      setShowMenu(true);
+      if (navigator.vibrate) {
+        navigator.vibrate(50);
+      }
+    }, 500);
+
+    setLongPressTimer(timer);
+  };
+
+  const handleTouchEnd = () => {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      setLongPressTimer(null);
+    }
+  };
 
   const formatTime = (timestamp) => {
     if (!timestamp) return "";
 
     const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const yesterday = new Date(today);
     yesterday.setDate(today.getDate() - 1);
-
     const target = new Date(date.getFullYear(), date.getMonth(), date.getDate());
 
     let datePart;
@@ -945,17 +982,20 @@ function ChatMessage({ message }) {
     return `${datePart} ${timePart}`;
   };
 
-  const handleImageLoad = () => {
-    setImageLoading(false);
-  };
-
+  const handleImageLoad = () => setImageLoading(false);
   const handleImageError = () => {
     setImageLoading(false);
     setImageError(true);
   };
 
   return (
-    <div className={`message ${messageClass}`}>
+    <div
+      className={`message ${messageClass} ${isOwner ? 'message-owner' : ''}`}
+      onMouseEnter={() => isOwner && setShowMenu(true)}
+      onMouseLeave={() => setShowMenu(false)}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+    >
       <img
         src={photoURL || "https://ui-avatars.com/api/?name=" + encodeURIComponent(displayName || "User")}
         alt="avatar"
@@ -963,14 +1003,41 @@ function ChatMessage({ message }) {
       />
       <div className="message-content">
         <div className="message-header">
-          <span className="message-timestamp">{formatTime(createdAt)}</span>
+          <span className="message-timestamp">
+            {formatTime(createdAt)}
+            {editedAt && <span className="edited-indicator"> (edited)</span>}
+          </span>
           <strong>{displayName || "Unknown"}</strong>
         </div>
 
-        {/* Display text if present */}
-        {text && <p>{text}</p>}
+        {text && !isEditing && <p>{text}</p>}
 
-        {/* Display image if present */}
+        {isEditing && (
+          <div className="message-edit-container">
+            <textarea
+              value={editText}
+              onChange={(e) => setEditText(e.target.value)}
+              className="message-edit-input"
+              rows={Math.min(Math.max(editText.split('\n').length, 1), 4)}
+              autoFocus
+            />
+            <div className="message-edit-actions">
+              <button
+                className="btn btn-sm btn-primary"
+                onClick={() => onSaveEdit(messageId)}
+              >
+                Save
+              </button>
+              <button
+                className="btn btn-sm btn-secondary"
+                onClick={onCancelEdit}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+
         {imageUrl && (
           <div className="message-image-container">
             {imageLoading && (
@@ -994,6 +1061,27 @@ function ChatMessage({ message }) {
                 <span>Failed to load image</span>
               </div>
             )}
+          </div>
+        )}
+
+        {isOwner && showMenu && !isEditing && (
+          <div className="message-menu" ref={menuRef}>
+            {text && (
+              <button
+                className="message-menu-item"
+                onClick={() => onStartEdit(message)}
+              >
+                <i className="bi bi-pencil"></i>
+                Edit
+              </button>
+            )}
+            <button
+              className="message-menu-item message-menu-delete"
+              onClick={() => onDelete(messageId)}
+            >
+              <i className="bi bi-trash"></i>
+              Delete
+            </button>
           </div>
         )}
       </div>
