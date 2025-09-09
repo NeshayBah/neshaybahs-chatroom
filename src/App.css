@@ -1678,6 +1678,7 @@ header h1 {
     flex-shrink: 0;
     position: relative;
     z-index: 1000;
+    height: 70px;
   }
   
   /* Show mobile mini player, hide desktop player */
@@ -1875,5 +1876,52 @@ header h1 {
   
   .message {
     max-width: 90%;
+  }
+}
+
+/* Mobile header button adjustments - icons only */
+@media (max-width: 768px) {
+  /* Target settings button specifically */
+  .settings-btn.btn-outline-light {
+    padding: 8px;
+    border-radius: 8px;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+    font-size: 0; /* Hide text */
+  }
+
+  /* Target sign out button specifically */
+  .signout-btn.btn-outline-light {
+    padding: 8px;
+    border-radius: 8px;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+    font-size: 0; /* Hide text */
+  }
+  
+  /* Keep icons visible in both buttons */
+  .settings-btn.btn-outline-light i,
+  .signout-btn.btn-outline-light i {
+    font-size: 14px;
+    color: white;
+  }
+  
+  /* Remove margins from icons */
+  .settings-btn.btn-outline-light .me-2,
+  .signout-btn.btn-outline-light .me-2 {
+    margin-right: 0 !important;
+  }
+  
+  /* Reduce gap between buttons */
+  .d-flex.gap-2 {
+    gap: 0.25rem !important;
   }
 }

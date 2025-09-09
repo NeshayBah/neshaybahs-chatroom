@@ -351,7 +351,7 @@ function App() {
         <div className="d-flex gap-2">
           {user && (
             <button
-              className="btn btn-outline-light"
+              className="btn btn-outline-light settings-btn"
               onClick={() => setShowSettings(true)}
             >
               <i className="bi bi-gear me-2"></i>Settings
@@ -584,7 +584,7 @@ function SignIn() {
       <button className="btn btn-outline-light" onClick={signInWithGoogle}>
         <i className="bi bi-google me-2"></i> Sign in with Google
       </button>
-      <p className="mt-2">Made by NeshayBah w/ vibe coding</p>
+      <p className="mt-2">Made by NeshayBah w/ abit of vibe coding</p>
     </div>
   );
 }
@@ -592,7 +592,7 @@ function SignIn() {
 function SignOut() {
   return (
     auth.currentUser && (
-      <button className="sign-out btn btn-outline-light" onClick={() => signOut(auth)}>
+      <button className="sign-out signout-btn btn btn-outline-light" onClick={() => signOut(auth)}>
         <i className="bi bi-box-arrow-right me-2"></i> Sign Out
       </button>
     )
