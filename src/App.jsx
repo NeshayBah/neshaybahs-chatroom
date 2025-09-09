@@ -403,7 +403,7 @@ function App() {
     </div>
   );
 }
-// Profile Settings Component
+
 // Profile Settings Component
 function ProfileSettings({ user, onClose }) {
   const { customProfile, displayData, updateProfile } = useUserProfile(user);
@@ -604,7 +604,6 @@ function ProfileSettings({ user, onClose }) {
   );
 }
 
-
 // Sign In Component
 function SignIn() {
   const signInWithGoogle = async () => {
@@ -633,7 +632,52 @@ function SignOut() {
   );
 }
 
-// Music Player Component
+// Mobile Mini Player Component (separate from desktop player)
+function MobileMiniPlayer() {
+  const {
+    audioRef,
+    currentTrack,
+    isPlaying,
+    togglePlayPause,
+    nextTrack,
+    previousTrack
+  } = useMusicPlayer();
+
+  const defaultAlbumCover = "https://i.scdn.co/image/ab67616d0000b27398b1c6c0d05f8841f08a9eca";
+
+  const handleImageError = (e) => {
+    e.target.src = defaultAlbumCover;
+  };
+
+  return (
+    <div className="mobile-mini-player">
+      <audio ref={audioRef} />
+      <img
+        src={currentTrack.albumCover}
+        alt="Album Cover"
+        className="mini-album-cover"
+        onError={handleImageError}
+      />
+      <div className="mini-track-info">
+        <p className="mini-song-name">{currentTrack.songName}</p>
+        <p className="mini-artist-name">{currentTrack.artist}</p>
+      </div>
+      <div className="mini-controls">
+        <button className="mini-skip-back" onClick={previousTrack}>
+          <i className="bi bi-skip-start"></i>
+        </button>
+        <button className="mini-play-pause" onClick={togglePlayPause}>
+          <i className={`bi bi-${isPlaying ? 'pause' : 'play'}`}></i>
+        </button>
+        <button className="mini-skip-forward" onClick={nextTrack}>
+          <i className="bi bi-skip-end"></i>
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// Music Player Component (desktop only now)
 function MusicPlayer() {
   const {
     audioRef,
@@ -651,7 +695,7 @@ function MusicPlayer() {
   };
 
   return (
-    <div className="media-controls">
+    <div className="media-controls desktop-player">
       <audio ref={audioRef} />
       <img
         src={currentTrack.albumCover}
@@ -795,7 +839,10 @@ function ChatRoom() {
 
   return (
     <>
-      {/* Music Player */}
+      {/* Mobile Mini Player - show only on mobile */}
+      <MobileMiniPlayer />
+      
+      {/* Desktop Music Player */}
       <MusicPlayer />
 
       {/* Chat panel */}
