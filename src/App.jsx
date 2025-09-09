@@ -355,7 +355,17 @@ function App() {
   return (
     <div className="App">
       <header>
-        <h1>NeshayBahs Chatroom</h1>
+        <div className="d-flex align-items-center">
+          <img 
+            src={`${import.meta.env.BASE_URL}images/logo.png`}
+            alt="Logo" 
+            style={{ height: '40px', width: 'auto', marginRight: '15px' }}
+            onError={(e) => {
+              e.target.style.display = 'none';
+            }}
+          />
+          <h1>NeshayBahs Chatroom</h1>
+        </div>
         <div className="d-flex gap-2">
           {user && (
             <button
@@ -392,38 +402,79 @@ function App() {
     </div>
   );
 }
-
+// Profile Settings Component
 // Profile Settings Component
 function ProfileSettings({ user, onClose }) {
   const { customProfile, displayData, updateProfile } = useUserProfile(user);
   const [isEditing, setIsEditing] = useState(false);
   const [tempName, setTempName] = useState("");
   const [tempPhoto, setTempPhoto] = useState("");
+  const [selectedFile, setSelectedFile] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
+  const fileInputRef = useRef();
 
   useEffect(() => {
     if (isEditing) {
-      setTempName(customProfile?.displayName || "");
-      setTempPhoto(customProfile?.photoURL || "");
+      setTempName(prev => prev || customProfile?.displayName || "");
+      setTempPhoto(prev => prev || customProfile?.photoURL || "");
     }
-  }, [isEditing, customProfile]);
+  }, [isEditing]);
+
+  const handleFileSelect = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (!file.type.startsWith("image/")) {
+        alert("Please select an image file.");
+        return;
+      }
+      if (file.size > 10 * 1024 * 1024) {
+        alert("Image must be under 10MB.");
+        return;
+      }
+      setSelectedFile(file);
+    }
+  };
+
+  const removeSelectedFile = () => {
+    setSelectedFile(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
 
   const handleSave = async () => {
     setIsSaving(true);
 
-    const profileData = {};
-    if (tempName.trim()) profileData.displayName = tempName.trim();
-    if (tempPhoto.trim()) profileData.photoURL = tempPhoto.trim();
+    try {
+      let photoURL = tempPhoto;
 
-    const success = await updateProfile(profileData);
+      // Upload file if selected
+      if (selectedFile) {
+        const uploadResult = await uploadImage(selectedFile, user.uid);
+        if (uploadResult.success) {
+          photoURL = uploadResult.url;
+        } else {
+          alert("Upload failed: " + uploadResult.error);
+          setIsSaving(false);
+          return;
+        }
+      }
 
-    if (success) {
-      setIsEditing(false);
-    } else {
-      alert("Failed to update profile. Please try again.");
+      const profileData = {};
+      if (tempName.trim()) profileData.displayName = tempName.trim();
+      if (photoURL) profileData.photoURL = photoURL;
+
+      const success = await updateProfile(profileData);
+
+      if (success) {
+        setIsEditing(false);
+        setSelectedFile(null);
+      } else {
+        alert("Failed to update profile. Please try again.");
+      }
+    } finally {
+      setIsSaving(false);
     }
-
-    setIsSaving(false);
   };
 
   const handleReset = async () => {
@@ -432,11 +483,12 @@ function ProfileSettings({ user, onClose }) {
 
       const success = await updateProfile({
         displayName: null,
-        photoURL: null
+        photoURL: null,
       });
 
       if (success) {
         setIsEditing(false);
+        setSelectedFile(null);
       }
 
       setIsSaving(false);
@@ -449,14 +501,21 @@ function ProfileSettings({ user, onClose }) {
         <div className="profile-display">
           <div className="d-flex align-items-center gap-3 mb-3">
             <img
-              src={displayData.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayData.displayName)}`}
+              src={
+                displayData.photoURL ||
+                `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                  displayData.displayName
+                )}`
+              }
               alt="Profile"
               className="profile-avatar"
             />
             <div>
               <h5 className="mb-0">{displayData.displayName}</h5>
               <small>
-                {customProfile?.displayName ? "Custom Profile" : "Using Google Profile"}
+                {customProfile?.displayName
+                  ? "Custom Profile"
+                  : "Using Google Profile"}
               </small>
             </div>
           </div>
@@ -488,26 +547,26 @@ function ProfileSettings({ user, onClose }) {
         </div>
 
         <div className="mb-3">
-          <label className="form-label">Profile Picture URL</label>
+          <label className="form-label">Profile Picture</label>
           <input
             type="url"
-            className="form-control"
+            className="form-control mb-2"
             value={tempPhoto}
             onChange={(e) => setTempPhoto(e.target.value)}
             placeholder={user?.photoURL || "Enter image URL"}
           />
-          {tempPhoto && (
+          <label className="form-label">Upload Profile</label>
+          <input
+            type="file"
+            ref={fileInputRef}
+            accept="image/*"
+            onChange={handleFileSelect}
+            className="form-control"
+          />
+
+          {selectedFile && (
             <div className="mt-2">
-              <small className="text-muted">Preview:</small>
-              <br />
-              <img
-                src={tempPhoto}
-                alt="Preview"
-                className="profile-avatar mt-1"
-                onError={(e) => {
-                  e.target.style.display = 'none';
-                }}
-              />
+              <ImagePreview file={selectedFile} onRemove={removeSelectedFile} />
             </div>
           )}
         </div>
@@ -543,6 +602,7 @@ function ProfileSettings({ user, onClose }) {
     </div>
   );
 }
+
 
 // Sign In Component
 function SignIn() {
