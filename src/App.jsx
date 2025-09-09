@@ -932,14 +932,14 @@ function ChatMessage({ message, onDelete, onStartEdit, onCancelEdit, onSaveEdit,
     try {
       const messageRef = doc(firestore, "messages", messageId);
       const messageDoc = await getDoc(messageRef);
-      
+
       if (messageDoc.exists()) {
         const currentReactions = messageDoc.data().reactions || {};
-        
+
         if (!currentReactions[emoji]) {
           currentReactions[emoji] = {};
         }
-        
+
         // Toggle reaction
         if (currentReactions[emoji][user.uid]) {
           delete currentReactions[emoji][user.uid];
@@ -952,7 +952,7 @@ function ChatMessage({ message, onDelete, onStartEdit, onCancelEdit, onSaveEdit,
             timestamp: serverTimestamp()
           };
         }
-        
+
         await updateDoc(messageRef, { reactions: currentReactions });
       }
     } catch (error) {
@@ -967,11 +967,11 @@ function ChatMessage({ message, onDelete, onStartEdit, onCancelEdit, onSaveEdit,
     }
 
     clickCountRef.current += 1;
-    
+
     if (clickTimeoutRef.current) {
       clearTimeout(clickTimeoutRef.current);
     }
-    
+
     clickTimeoutRef.current = setTimeout(() => {
       if (clickCountRef.current === 2) {
         addReaction('❤️');
@@ -989,7 +989,7 @@ function ChatMessage({ message, onDelete, onStartEdit, onCancelEdit, onSaveEdit,
   // Get reaction data for display
   const getReactionData = () => {
     if (!reactions) return [];
-    
+
     return Object.entries(reactions)
       .map(([emoji, users]) => ({
         emoji,
@@ -1017,7 +1017,7 @@ function ChatMessage({ message, onDelete, onStartEdit, onCancelEdit, onSaveEdit,
 
     document.addEventListener('mousedown', handleClickOutside);
     document.addEventListener('touchstart', handleClickOutside);
-    
+
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
       document.removeEventListener('touchstart', handleClickOutside);
@@ -1044,7 +1044,6 @@ function ChatMessage({ message, onDelete, onStartEdit, onCancelEdit, onSaveEdit,
     }, 500);
     setReactionTimer(rTimer);
 
-    // Owner menu timer (longer press)
     if (isOwner) {
       const mTimer = setTimeout(() => {
         setShowMenu(true);
@@ -1217,9 +1216,19 @@ function ChatMessage({ message, onDelete, onStartEdit, onCancelEdit, onSaveEdit,
         )}
 
         {/* Message Menu */}
-        {isOwner && showMenu && !isEditing && (
+        {showMenu && !isEditing && (
           <div className="message-menu" ref={menuRef}>
-            {text && (
+            <button
+              className="message-menu-item"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowReactionMenu(!showReactionMenu);
+              }}
+            >
+              <i className="bi bi-emoji-smile"></i>
+              React
+            </button>
+            {isOwner && text && (
               <button
                 className="message-menu-item"
                 onClick={() => onStartEdit(message)}
@@ -1228,27 +1237,34 @@ function ChatMessage({ message, onDelete, onStartEdit, onCancelEdit, onSaveEdit,
                 Edit
               </button>
             )}
-            <button
-              className="message-menu-item message-menu-delete"
-              onClick={() => onDelete(messageId)}
-            >
-              <i className="bi bi-trash"></i>
-              Delete
-            </button>
+            {isOwner && (
+              <button
+                className="message-menu-item message-menu-delete"
+                onClick={() => onDelete(messageId)}
+              >
+                <i className="bi bi-trash"></i>
+                Delete
+              </button>
+            )}
           </div>
         )}
 
-        {/* Quick Reaction Button (Desktop) */}
-        <button
-          className="quick-reaction-btn"
-          onClick={(e) => {
-            e.stopPropagation();
-            setShowReactionMenu(!showReactionMenu);
-          }}
-          title="Add reaction"
-        >
-          <i className="bi bi-emoji-smile"></i>
-        </button>
+        {/* Reaction Menu */}
+        {showReactionMenu && (
+          <div className="reaction-menu" ref={reactionMenuRef}>
+            <div className="reaction-menu-content">
+              {availableEmojis.map(emoji => (
+                <button
+                  key={emoji}
+                  className="reaction-menu-emoji"
+                  onClick={() => handleReactionSelect(emoji)}
+                >
+                  {emoji}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
